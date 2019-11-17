@@ -124,7 +124,7 @@ def createMain( testRootPath, testFunctions ):
     output += ' */\n'
     output += '\n'
     for func in testFunctions:
-        output += 'export void {}( void );\n'.format( func )
+        output += 'extern void {}( void );\n'.format( func )
     output += '\n'
     output += 'int main( void )\n'
     output += '{\n'
