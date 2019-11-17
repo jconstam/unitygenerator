@@ -1,0 +1,15 @@
+# Azure DevOps CI Configuration
+
+pool:
+  name: Hosted Ubuntu 1604
+
+steps:
+- task: UsePythonVersion@0
+  displayName: 'Set Environment to use Python 3.6'
+  inputs:
+    versionSpec: 3.6
+- script: |
+   sudo ./preReqs.sh
+  displayName: 'Install Pre-Reqs'
+- script: './unityGenerator.py -s test/src -i test/include -t output'
+  displayName: 'Run Test'
