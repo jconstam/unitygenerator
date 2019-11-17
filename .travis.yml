@@ -6,6 +6,15 @@ python:
   - "3.7"
   - "3.8"
 
-script:
-  - preReqs.sh
+addons:
+  apt:
+    packages:
+      build-essential
+      cmake
+      python3-pip
+
+install:
+  - pip install --user -r requirements.txt
+  
+script: 
   - unityGenerator.py -s test/src -i test/include -t output

@@ -8,7 +8,13 @@ steps:
   displayName: 'Set Environment to use Python 3.6'
   inputs:
     versionSpec: 3.6
-- script: 'sudo preReqs.sh'
-  displayName: 'Install Pre-Reqs'
+- script: |
+   sudo apt-get update
+   sudo apt-get install python-pip cmake lcov ruby xsltproc valgrind cppcheck -y
+  displayName: 'Install Ubuntu Packages'
+- script: |
+   python -m pip install --upgrade pip 
+   pip install -r requirements.txt
+  displayName: 'Install Python Dependencies'
 - script: 'unityGenerator.py -s test/src -i test/include -t output'
   displayName: 'Run Test'
