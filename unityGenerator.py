@@ -167,6 +167,46 @@ def createUnityCMakeList( testRootPath, templatesPath ):
         print( 'Copying Unity CMakeLists file {} from {}'.format( destFilePath, templateFilePath ) )
         shutil.copy2( templateFilePath, destFilePath )
 
+def createTestCMakeList( testRootPath, sourceRootPath, sourceFiles ):
+    filePath = os.path.join( testRootPath, 'CMakeLists.txt' )
+
+    output = ''
+    output += '# File {} automatically generated\n'.format( filePath )
+    output += '==========================================\n'
+    output += '# Download and unpack unity at configure time\n'
+    output += 'configure_file( CMakeLists.txt.in unity-download/CMakeLists.txt )\n'
+    output += 'execute_process( COMMAND ${CMAKE_COMMAND} -G "${CMAKE_GENERATOR}" . RESULT_VARIABLE result WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/unity-download )\n'
+    output += 'if( result )\n'
+    output += '\tmessage( FATAL_ERROR "CMake step for unity failed: ${result}" )\n'
+    output += 'endif()\n'
+    output += 'execute_process( COMMAND ${CMAKE_COMMAND} --build . RESULT_VARIABLE result WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/unity-download )\n'
+    output += 'if(result)\n'
+    output += '\tmessage( FATAL_ERROR "Build step for unity failed: ${result}" )\n'
+    output += 'endif()\n'
+    output += '==========================================\n'
+    output += '# Compile flags\n'
+    output += 'set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fprofile-arcs -ftest-coverage -fno-inline -O0" )\n'
+    output += '==========================================\n'
+    output += '# Source files\n'
+    output += 'set( UNITTEST_UNITY_SOURCES\n'
+    output += '\t${CMAKE_CURRENT_BINARY_DIR}/unity-src/src/unity.c\n'
+    output += '\t${CMAKE_CURRENT_BINARY_DIR}/main_tests.c\n'
+    output += ')\n'
+    output += '==========================================\n'
+    output += '# Include paths\n'
+    output += 'set( UNITTEST_UNITY_INCLUDES\n'
+    output += '\t${CMAKE_CURRENT_BINARY_DIR}/unity-src/src\n'
+    output += '\t${SOURCES_INCLUDE}\n'
+    output += ')\n'
+    output += '==========================================\n'
+    
+    if checkFileContentsSame( filePath, output ):
+        print( 'CMakeLists file {} has not changed'.format( filePath ) )
+    else:
+        print( 'CMakeLists file {} has changed and is being generated'.format( filePath ) )
+        with open( filePath, 'w' ) as outFile:
+            outFile.write( output )
+
 if __name__ == "__main__":
     args = collectArguments( )
 
@@ -183,3 +223,4 @@ if __name__ == "__main__":
     testFunctions = createTestStubs( testRootPath, sourceFiles, includeFiles )
     createMain( testRootPath, testFunctions )
     createUnityCMakeList( testRootPath, templatesPath )
+    createTestCMakeList( testRootPath, sourceRootPath, sourceFiles )
