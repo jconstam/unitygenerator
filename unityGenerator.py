@@ -1,6 +1,8 @@
 #!/usr/bin/python3
 
 import os
+import sys
+import shutil
 import hashlib
 
 from pathlib import Path
@@ -27,6 +29,17 @@ def findSourceFiles( sourceRoot ):
     return findFiles( sourceRoot, '.c' )
 def findHeaderFiles( includeRoot ):
     return findFiles( includeRoot, '.h' )
+
+def checkFileContentsSame( filePath, contents ):
+    contentsMD5 = hashlib.md5( contents.encode( ) )
+
+    fileMD5 = hashlib.md5( )
+    if os.path.exists( filePath ):
+        with open( filePath, 'rb' ) as inFile:
+            for chunk in iter( lambda: inFile.read( 4096 ), b'' ):
+                fileMD5.update( chunk )
+
+    return contentsMD5.hexdigest( ) == fileMD5.hexdigest( )
 
 def generateTestStub( sourceFilePath, sourceFile, includeFiles ):
     testFilePath = sourceFilePath.replace( '.c', '_tests.c' )
@@ -137,24 +150,28 @@ def createMain( testRootPath, testFunctions ):
     output += '\t\n'
     output += '\treturn UNITY_END( );\n'
     output += '}\n'
-
-    outputMD5 = hashlib.md5( output.encode( ) )
-
-    fileMD5 = hashlib.md5( )
-    if os.path.exists( mainFilePath ):
-        with open( mainFilePath, 'rb' ) as inFile:
-            for chunk in iter( lambda: inFile.read( 4096 ), b'' ):
-                fileMD5.update( chunk )
     
-    if outputMD5.hexdigest( ) == fileMD5.hexdigest( ):
+    if checkFileContentsSame( mainFilePath, output ):
         print( 'Main file {} has not changed'.format( mainFilePath ) )
     else:
         print( 'Main file {} has changed and is being generated'.format( mainFilePath ) )
         with open( mainFilePath, 'w' ) as outFile:
             outFile.write( output )
 
+def createUnityCMakeList( testRootPath, templatesPath ):
+    templateFilePath = os.path.join( templatesPath, 'CMakeLists.txt.in' )
+    destFilePath = os.path.join( testRootPath, 'CMakeLists.txt.in' )
+    if os.path.exists( destFilePath ):
+        print( 'Unity CMakeLists file {} already exists'.format( destFilePath ) )
+    else:
+        print( 'Copying Unity CMakeLists file {} from {}'.format( destFilePath, templateFilePath ) )
+        shutil.copy2( templateFilePath, destFilePath )
+
 if __name__ == "__main__":
     args = collectArguments( )
+
+    basePath = os.path.dirname( sys.argv[ 0 ] )
+    templatesPath = os.path.join( basePath, 'templates' )
 
     sourceRootPath = os.path.abspath( args.sourceRoot )
     includeRootPath = os.path.abspath( args.includeRoot )
@@ -165,3 +182,4 @@ if __name__ == "__main__":
 
     testFunctions = createTestStubs( testRootPath, sourceFiles, includeFiles )
     createMain( testRootPath, testFunctions )
+    createUnityCMakeList( testRootPath, templatesPath )
