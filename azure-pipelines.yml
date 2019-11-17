@@ -10,7 +10,7 @@ steps:
     versionSpec: 3.6
 - script: |
    sudo apt-get update
-   sudo apt-get install build-esential cmake python3-pip -y
+   sudo apt-get install build-essential cmake python3-pip -y
   displayName: 'Install Ubuntu Packages'
 - script: |
    python3 -m pip install --upgrade pip
