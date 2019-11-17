@@ -6,8 +6,6 @@ python:
   - "3.7"
   - "3.8"
 
-install:
-  - ./preReqs.sh
-
 script:
-  - ./unityGenerator.py -s test/src -i test/include -t output
+  - preReqs.sh
+  - unityGenerator.py -s test/src -i test/include -t output

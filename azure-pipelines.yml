@@ -8,8 +8,7 @@ steps:
   displayName: 'Set Environment to use Python 3.6'
   inputs:
     versionSpec: 3.6
-- script: |
-   sudo ./preReqs.sh
+- script: 'sudo preReqs.sh'
   displayName: 'Install Pre-Reqs'
-- script: './unityGenerator.py -s test/src -i test/include -t output'
+- script: 'unityGenerator.py -s test/src -i test/include -t output'
   displayName: 'Run Test'
