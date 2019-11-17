@@ -14,7 +14,7 @@ addons:
       python3-pip
 
 install:
-  - pip install --user -r requirements.txt
+  - pip install -r requirements.txt
   
 script: 
-  - unityGenerator.py -s test/src -i test/include -t output
+  - python unityGenerator.py -s test/src -i test/include -t output
