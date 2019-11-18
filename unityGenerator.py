@@ -29,6 +29,14 @@ def findSourceFiles( sourceRoot ):
     return findFiles( sourceRoot, '.c' )
 def findHeaderFiles( includeRoot ):
     return findFiles( includeRoot, '.h' )
+def copyTemplateFile( fileName, templatesPath, destPath ):
+    templateFilePath = os.path.join( templatesPath, fileName )
+    destFilePath = os.path.join( destPath, fileName )
+    if os.path.exists( destFilePath ):
+        print( 'Template file {} already exists'.format( destFilePath ) )
+    else:
+        print( 'Copying template file {} to {}'.format( templateFilePath, destFilePath ) )
+        shutil.copy2( templateFilePath, destFilePath )
 
 def checkFileContentsSame( filePath, contents ):
     contentsMD5 = hashlib.md5( contents.encode( ) )
@@ -62,6 +70,8 @@ def generateTestStub( sourceFilePath, sourceFile, includeFiles ):
             outFile.write( ' */\n' )
             outFile.write( '\n' )
             outFile.write( '// ===== INCLUDES =====\n' )
+            outFile.write( '#include <stdbool.h>\n' )
+            outFile.write( '\n' )
             outFile.write( '#include "unity.h"\n' )
             if includeFile in includeFiles:
                 outFile.write( '#include "{}"\n'.format( includeFile ) )
@@ -75,20 +85,18 @@ def generateTestStub( sourceFilePath, sourceFile, includeFiles ):
             outFile.write( '// ===== FILE GLOBAL VARIABLES =====\n' )
             outFile.write( '\n' )
             outFile.write( '// ===== STATIC FUNCTION DECLARATIONS =====\n' )
-            outFile.write( 'static void setUp( void );\n' )
-            outFile.write( 'static void tearDown( void );\n' )
             outFile.write( '\n' )
             outFile.write( '// ===== UNIT TEST MANAGEMENT FUNCTIONS =====\n' )
             outFile.write( '// @brief Initialize unit tests for {}\n'.format( testFile ) )
             outFile.write( '// Runs before every test function.\n' )
-            outFile.write( 'static void setUp( void )\n' )
+            outFile.write( 'void setUp( void )\n' )
             outFile.write( '{\n' )
             outFile.write( '    \n' )
             outFile.write( '}\n' )
             outFile.write( '\n' )
             outFile.write( '// @brief Finalize unit tests for {}\n'.format( testFile ) )
             outFile.write( '// Runs after every test function.\n' )
-            outFile.write( 'static void tearDown( void )\n' )
+            outFile.write( 'void tearDown( void )\n' )
             outFile.write( '{\n' )
             outFile.write( '    \n' )
             outFile.write( '}\n' )
@@ -113,66 +121,66 @@ def generateTestStub( sourceFilePath, sourceFile, includeFiles ):
             outFile.write( '\n' )
             outFile.write( '// ===== END OF FILE =====\n' )
             outFile.write( '\n' )
-    return testFunction
+    return [ testFilePath, testName, testFunction ]
 def createTestStubs( testRootPath, sourceFiles, includeFiles ):
     if not os.path.exists( testRootPath ):
         os.makedirs( testRootPath )
-    testFunctions = [ ]
+    testData = { }
     for sourceFile in sourceFiles:
         sourceFilePath = os.path.join( testRootPath, sourceFile )
         if not os.path.exists( os.path.dirname( sourceFilePath ) ):
             os.makedirs( os.path.dirname( sourceFilePath ) )
-        testFunctions.append( generateTestStub( sourceFilePath, sourceFile, includeFiles ) )
-    return testFunctions
+        [ testFilePath, testName, testFunc ] = generateTestStub( sourceFilePath, sourceFile, includeFiles )
+        testData[ testName ] = { 'testFile': testFilePath, 'sourceFile': sourceFile, 'testFunc': testFunc }
+    return testData
 
-def createMain( testRootPath, testFunctions ):
-    mainFilePath = os.path.join( testRootPath, 'main_tests.c' )
+def createMains( testRootPath, testData ):
+    for testName in testData:
+        mainFilePath = os.path.join( testRootPath, 'main_{}.c'.format( testName ) )
+        testData[ testName ][ 'mainFile' ] = mainFilePath
 
-    output = ''
-    output += '/*\n'
-    output += ' * =======================\n'
-    output += ' * @file {}\n'.format( os.path.basename( mainFilePath ) )
-    output += ' * @brief Unit test main\n'
-    output += ' * =======================\n'
-    output += ' */\n'
-    output += '\n'
-    for func in testFunctions:
-        output += 'extern void {}( void );\n'.format( func )
-    output += '\n'
-    output += 'int main( void )\n'
-    output += '{\n'
-    output += '\tUNITY_BEGIN( );\n'
-    output += '\tif( TEST_PROTECT( ) )\n'
-    output += '\t{\n'
-    for func in testFunctions:
-        output += '\t\t{}( );\n'.format( func )
-    output += '\t}\n'
-    output += '\t\n'
-    output += '\treturn UNITY_END( );\n'
-    output += '}\n'
+        output = ''
+        output += '/*\n'
+        output += ' * =======================\n'
+        output += ' * @file {}\n'.format( os.path.basename( mainFilePath ) )
+        output += ' * @brief Unit test main for {}\n'.format( testName )
+        output += ' * =======================\n'
+        output += ' */\n'
+        output += '\n'
+        output += '#include "unity.h"\n'
+        output += '\n'
+        output += 'extern void {}( void );\n'.format( testData[ testName ][ 'testFunc' ] )
+        output += '\n'
+        output += 'int main( void )\n'
+        output += '{\n'
+        output += '\tUNITY_BEGIN( );\n'
+        output += '\tif( TEST_PROTECT( ) )\n'
+        output += '\t{\n'
+        output += '\t\t{}( );\n'.format( testData[ testName ][ 'testFunc' ] )
+        output += '\t}\n'
+        output += '\t\n'
+        output += '\treturn UNITY_END( );\n'
+        output += '}\n'
     
-    if checkFileContentsSame( mainFilePath, output ):
-        print( 'Main file {} has not changed'.format( mainFilePath ) )
-    else:
-        print( 'Main file {} has changed and is being generated'.format( mainFilePath ) )
-        with open( mainFilePath, 'w' ) as outFile:
-            outFile.write( output )
+        if checkFileContentsSame( mainFilePath, output ):
+            print( 'Main file {} has not changed'.format( mainFilePath ) )
+        else:
+            print( 'Main file {} has changed and is being generated'.format( mainFilePath ) )
+            with open( mainFilePath, 'w' ) as outFile:
+                outFile.write( output )
 
-def createUnityCMakeList( testRootPath, templatesPath ):
-    templateFilePath = os.path.join( templatesPath, 'CMakeLists.txt.in' )
-    destFilePath = os.path.join( testRootPath, 'CMakeLists.txt.in' )
-    if os.path.exists( destFilePath ):
-        print( 'Unity CMakeLists file {} already exists'.format( destFilePath ) )
-    else:
-        print( 'Copying Unity CMakeLists file {} from {}'.format( destFilePath, templateFilePath ) )
-        shutil.copy2( templateFilePath, destFilePath )
-
-def createTestCMakeList( testRootPath, sourceRootPath, sourceFiles ):
+def createTestCMakeList( testRootPath, sourceRootPath, sourceFiles, testData, includeRootPath ):
     filePath = os.path.join( testRootPath, 'CMakeLists.txt' )
 
     output = ''
     output += '# File {} automatically generated\n'.format( filePath )
-    output += '==========================================\n'
+    output += '# ==========================================\n'
+    output += '# CMake Setup\n'
+    output += 'enable_testing( )\n'
+    output += 'cmake_minimum_required( VERSION 3.5 )\n'
+    output += 'set( CMAKE_CXX_STANDARD 17 )\n'
+    output += '\n'
+    output += '# ==========================================\n'
     output += '# Download and unpack unity at configure time\n'
     output += 'configure_file( CMakeLists.txt.in unity-download/CMakeLists.txt )\n'
     output += 'execute_process( COMMAND ${CMAKE_COMMAND} -G "${CMAKE_GENERATOR}" . RESULT_VARIABLE result WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/unity-download )\n'
@@ -183,22 +191,38 @@ def createTestCMakeList( testRootPath, sourceRootPath, sourceFiles ):
     output += 'if(result)\n'
     output += '\tmessage( FATAL_ERROR "Build step for unity failed: ${result}" )\n'
     output += 'endif()\n'
-    output += '==========================================\n'
+    output += '# ==========================================\n'
     output += '# Compile flags\n'
     output += 'set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fprofile-arcs -ftest-coverage -fno-inline -O0" )\n'
-    output += '==========================================\n'
-    output += '# Source files\n'
-    output += 'set( UNITTEST_UNITY_SOURCES\n'
-    output += '\t${CMAKE_CURRENT_BINARY_DIR}/unity-src/src/unity.c\n'
-    output += '\t${CMAKE_CURRENT_BINARY_DIR}/main_tests.c\n'
-    output += ')\n'
-    output += '==========================================\n'
-    output += '# Include paths\n'
-    output += 'set( UNITTEST_UNITY_INCLUDES\n'
-    output += '\t${CMAKE_CURRENT_BINARY_DIR}/unity-src/src\n'
-    output += '\t${SOURCES_INCLUDE}\n'
-    output += ')\n'
-    output += '==========================================\n'
+    for testName in testData:
+        testFilePath = testData[ testName ][ 'testFile' ]
+        mainFilePath = testData[ testName ][ 'mainFile' ]
+        sourceFilePath = os.path.join( sourceRootPath, testData[ testName ][ 'sourceFile' ] )
+        projectName = 'unittests_unity_c_{}'.format( testName.lower( ) )
+
+        output += '# ==========================================\n'
+        output += '# Setup project for {}\n'.format( testName )
+        output += 'include_directories( {}\n'.format( projectName )
+        output += '\t${CMAKE_CURRENT_BINARY_DIR}/unity-src/src\n'
+        output += '\t{}\n'.format( includeRootPath )
+        output += ')\n'
+        output += '# Source files\n'
+        output += 'add_executable( {}\n'.format( projectName )
+        output += '\t${CMAKE_CURRENT_BINARY_DIR}/unity-src/src/unity.c\n'
+        output += '\n'
+        output += '\t{}\n'.format( sourceFilePath )
+        output += '\n'
+        output += '\t{}\n'.format( testFilePath )
+        output += '\t{}\n'.format( mainFilePath )
+        output += ')\n'
+        output += 'add_test( {}\n'.format( projectName )
+        output += '\tbash {}/runUnityTest.sh\n'.format( testRootPath )
+        output += '\t{}\n'.format( projectName )
+        output += '\t${CMAKE_CURRENT_BINARY_DIR}\n'
+        output += ')\n'
+        output += '\n'
+    output += '# ==========================================\n'
+    output += '\n'
     
     if checkFileContentsSame( filePath, output ):
         print( 'CMakeLists file {} has not changed'.format( filePath ) )
@@ -220,7 +244,9 @@ if __name__ == "__main__":
     sourceFiles = findSourceFiles( sourceRootPath )
     includeFiles = findHeaderFiles( includeRootPath )
 
-    testFunctions = createTestStubs( testRootPath, sourceFiles, includeFiles )
-    createMain( testRootPath, testFunctions )
-    createUnityCMakeList( testRootPath, templatesPath )
-    createTestCMakeList( testRootPath, sourceRootPath, sourceFiles )
+    testData = createTestStubs( testRootPath, sourceFiles, includeFiles )
+    createMains( testRootPath, testData )
+    createTestCMakeList( testRootPath, sourceRootPath, sourceFiles, testData, includeRootPath )
+
+    copyTemplateFile( 'CMakeLists.txt.in', templatesPath, testRootPath )
+    copyTemplateFile( 'runUnityTest.sh', templatesPath, testRootPath )
