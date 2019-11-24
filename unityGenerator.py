@@ -73,6 +73,7 @@ def generateTestStub( sourceFilePath, sourceFile, includeFiles ):
             outFile.write( '#include <stdbool.h>\n' )
             outFile.write( '\n' )
             outFile.write( '#include "unity.h"\n' )
+            outFile.write( '#include "cmock.h"\n' )
             if includeFile in includeFiles:
                 outFile.write( '#include "{}"\n'.format( includeFile ) )
             else:
@@ -127,7 +128,7 @@ def createTestStubs( testRootPath, sourceFiles, includeFiles ):
         os.makedirs( testRootPath )
     testData = { }
     for sourceFile in sourceFiles:
-        sourceFilePath = os.path.join( testRootPath, sourceFile )
+        sourceFilePath = os.path.join( testRootPath, os.path.basename( sourceFile ).replace( '.c', '' ), os.path.basename( sourceFile ) )
         if not os.path.exists( os.path.dirname( sourceFilePath ) ):
             os.makedirs( os.path.dirname( sourceFilePath ) )
         [ testFilePath, testName, testFunc ] = generateTestStub( sourceFilePath, sourceFile, includeFiles )
@@ -136,7 +137,7 @@ def createTestStubs( testRootPath, sourceFiles, includeFiles ):
 
 def createMains( testRootPath, testData ):
     for testName in testData:
-        mainFilePath = os.path.join( testRootPath, 'main_{}.c'.format( testName ) )
+        mainFilePath = os.path.join( testRootPath, testName.replace( '_tests', '' ), 'main_{}.c'.format( testName ) )
         testData[ testName ][ 'mainFile' ] = mainFilePath
 
         output = ''
@@ -182,7 +183,7 @@ def createTestCMakeList( testRootPath, sourceRootPath, sourceFiles, testData, in
     output += '\n'
     output += '# ==========================================\n'
     output += '# Download and unpack unity at configure time\n'
-    output += 'configure_file( CMakeLists.txt.in unity-download/CMakeLists.txt )\n'
+    output += 'configure_file( CMakeLists_unity.txt.in unity-download/CMakeLists.txt )\n'
     output += 'execute_process( COMMAND ${CMAKE_COMMAND} -G "${CMAKE_GENERATOR}" . RESULT_VARIABLE result WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/unity-download )\n'
     output += 'if( result )\n'
     output += '\tmessage( FATAL_ERROR "CMake step for unity failed: ${result}" )\n'
@@ -191,6 +192,18 @@ def createTestCMakeList( testRootPath, sourceRootPath, sourceFiles, testData, in
     output += 'if(result)\n'
     output += '\tmessage( FATAL_ERROR "Build step for unity failed: ${result}" )\n'
     output += 'endif()\n'
+    output += '# ==========================================\n'
+    output += '# Download and unpack cmock at configure time\n'
+    output += 'configure_file( CMakeLists_cmock.txt.in cmock-download/CMakeLists.txt )\n'
+    output += 'execute_process( COMMAND ${CMAKE_COMMAND} -G "${CMAKE_GENERATOR}" . RESULT_VARIABLE result WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/cmock-download )\n'
+    output += 'if( result )\n'
+    output += '\tmessage( FATAL_ERROR "CMake step for cmock failed: ${result}" )\n'
+    output += 'endif()\n'
+    output += 'execute_process( COMMAND ${CMAKE_COMMAND} --build . RESULT_VARIABLE result WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/cmock-download )\n'
+    output += 'if(result)\n'
+    output += '\tmessage( FATAL_ERROR "Build step for cmock failed: ${result}" )\n'
+    output += 'endif()\n'
+    output += 'execute_process( COMMAND bundle install WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/cmock-src )\n'
     output += '# ==========================================\n'
     output += '# Compile flags\n'
     output += 'set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fprofile-arcs -ftest-coverage -fno-inline -O0" )\n'
@@ -204,11 +217,13 @@ def createTestCMakeList( testRootPath, sourceRootPath, sourceFiles, testData, in
         output += '# Setup project for {}\n'.format( testName )
         output += 'include_directories( {}\n'.format( projectName )
         output += '\t${CMAKE_CURRENT_BINARY_DIR}/unity-src/src\n'
+        output += '\t${CMAKE_CURRENT_BINARY_DIR}/cmock-src/src\n'
         output += '\t{}\n'.format( includeRootPath )
         output += ')\n'
         output += '# Source files\n'
         output += 'add_executable( {}\n'.format( projectName )
         output += '\t${CMAKE_CURRENT_BINARY_DIR}/unity-src/src/unity.c\n'
+        output += '\t${CMAKE_CURRENT_BINARY_DIR}/cmock-src/src/cmock.c\n'
         output += '\n'
         output += '\t{}\n'.format( sourceFilePath )
         output += '\n'
@@ -248,5 +263,6 @@ if __name__ == "__main__":
     createMains( testRootPath, testData )
     createTestCMakeList( testRootPath, sourceRootPath, sourceFiles, testData, includeRootPath )
 
-    copyTemplateFile( 'CMakeLists.txt.in', templatesPath, testRootPath )
+    copyTemplateFile( 'CMakeLists_unity.txt.in', templatesPath, testRootPath )
+    copyTemplateFile( 'CMakeLists_cmock.txt.in', templatesPath, testRootPath )
     copyTemplateFile( 'runUnityTest.sh', templatesPath, testRootPath )

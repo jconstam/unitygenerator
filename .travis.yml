@@ -12,9 +12,10 @@ addons:
       build-essential
       cmake
       python3-pip
+      ruby-bundler
 
 install:
   - pip install -r requirements.txt
   
 script: 
-  - python unityGenerator.py -s test/src -i test/include -t output
+  - ./script/test.sh

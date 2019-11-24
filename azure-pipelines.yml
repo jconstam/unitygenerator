@@ -10,11 +10,12 @@ steps:
     versionSpec: 3.6
 - script: |
    sudo apt-get update
-   sudo apt-get install build-essential cmake python3-pip -y
+   sudo apt-get install build-essential cmake python3-pip ruby-bundler -y
   displayName: 'Install Ubuntu Packages'
 - script: |
    python3 -m pip install --upgrade pip
    pip3 install -r requirements.txt
   displayName: 'Install Python Dependencies'
-- script: 'python unityGenerator.py -s test/src -i test/include -t output'
-  displayName: 'Run Test'
+- script: |
+   ./script/test.sh
+  displayName: 'Build Test Application'
