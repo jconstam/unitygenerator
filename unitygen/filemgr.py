@@ -184,7 +184,9 @@ class filemgr:
         mockFiles = [ ]
         includePaths = [ '${CMAKE_CURRENT_BINARY_DIR}/unity-src/src', '${CMAKE_CURRENT_BINARY_DIR}/cmock-src/src', mockRoot, includeRootPath ]
         for file in self.__includeFiles__:
-            mockFiles.append( os.path.join( mockRoot, 'Mock{}'.format( file.replace( '.h', '.c' ) ) ) )
+            mockFiles.append( os.path.join( mockRoot, 'Mock{}'.format( os.path.basename( file ).replace( '.h', '.c' ) ) ) )
+            if not file == os.path.basename( file ):
+                includePaths.append( os.path.join( includeRootPath, os.path.dirname( file ) ) )
 
         for mod in self.__modules__:
             output += '# ==========================================\n'
@@ -197,13 +199,11 @@ class filemgr:
             output += 'add_executable( {}\n'.format( mod.projectName( ) )
             output += '\t${CMAKE_CURRENT_BINARY_DIR}/unity-src/src/unity.c\n'
             output += '\t${CMAKE_CURRENT_BINARY_DIR}/cmock-src/src/cmock.c\n'
-            output += '\n'
             for file in mockFiles:
                 if not os.path.basename( file ) == mod.mockFileName( ):
                     output += '\t{}\n'.format( os.path.join( testRootPath, 'mocks', file ) )
             output += '\n'
             output += '\t{}\n'.format( os.path.join( sourceRootPath, mod.getSourceFile( ) ) )
-            output += '\n'
             output += '\t{}\n'.format( mod.testStubPath( testRootPath ) )
             output += ')\n'
             output += 'add_test( {}\n'.format( mod.projectName( ) )
