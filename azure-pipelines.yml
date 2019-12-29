@@ -2,12 +2,22 @@
 
 pool:
   name: Hosted Ubuntu 1604
+strategy:
+  matrix:
+    Python35:
+      python.version: '3.5'
+    Python36:
+      python.version: '3.6'
+    Python37:
+      python.version: '3.7'
+    Python38:
+      python.version: '3.8'
 
 steps:
 - task: UsePythonVersion@0
-  displayName: 'Set Environment to use Python 3.6'
   inputs:
-    versionSpec: 3.6
+    versionSpec: '$(python.version)'
+  displayName: 'Use Python $(python.version)'
 - script: |
    sudo apt-get update
    sudo apt-get install build-essential cmake python3-pip ruby-bundler -y
