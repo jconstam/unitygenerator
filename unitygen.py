@@ -5,24 +5,8 @@ import sys
 import shutil
 import hashlib
 
-from pathlib import Path
-
 from unitygen import misc
 
-def findFiles( root, extension ):
-    fileList = [ ]
-    for path, subdirs, files in os.walk( root ):
-        for x in files:
-            if x.endswith( extension ):
-                relPath = path.replace( root, '' )
-                if relPath.startswith( '/' ):
-                    relPath = relPath[ 1: ]
-                fileList.append( os.path.join( relPath, x ) )
-    return fileList 
-def findSourceFiles( sourceRoot ):
-    return findFiles( sourceRoot, '.c' )
-def findHeaderFiles( includeRoot ):
-    return findFiles( includeRoot, '.h' )
 def copyTemplateFile( fileName, templatesPath, destPath ):
     templateFilePath = os.path.join( templatesPath, fileName )
     destFilePath = os.path.join( destPath, fileName )
@@ -219,8 +203,8 @@ if __name__ == "__main__":
     includeRootPath = os.path.abspath( args.includeRoot )
     testRootPath = os.path.abspath( args.testRoot )
 
-    sourceFiles = findSourceFiles( sourceRootPath )
-    includeFiles = findHeaderFiles( includeRootPath )
+    sourceFiles = misc.findFiles( sourceRootPath, '.c' )
+    includeFiles = misc.findFiles( includeRootPath, '.h' )
 
     testData = createTestStubs( testRootPath, sourceFiles, includeFiles )
     createTestCMakeList( testRootPath, sourceRootPath, sourceFiles, testData, includeRootPath )
