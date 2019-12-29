@@ -4,9 +4,9 @@
     "version": "2.0.0",
     "tasks": [
         {
-            "label": "Build Test Project",
+            "label": "Build Example Project",
             "type": "shell",
-            "command": "./script/test.sh",
+            "command": "./script/buildExample.sh",
             "group": {
                 "kind": "build",
                 "isDefault": true
@@ -16,7 +16,7 @@
         {
             "label": "Cleanup Test Project",
             "type": "shell",
-            "command": "rm -rfv test/build test/unittest",
+            "command": "rm -rfv example/build example/unittest",
             "problemMatcher": []
         }
     ]

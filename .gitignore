@@ -107,3 +107,4 @@ output/
 example/unittest/
 example/build/
 mocks/
+test-output.xml

@@ -6,14 +6,8 @@ import shutil
 import hashlib
 
 from pathlib import Path
-from argparse import ArgumentParser
 
-def collectArguments( ):
-    parser = ArgumentParser( 'Unity Test Skeleton Generator', add_help=True )
-    parser.add_argument( '-s', '--sourceRoot', type=str, required=True, help='Path where the source files are located' )
-    parser.add_argument( '-i', '--includeRoot', type=str, required=True, help='Path where the include files are located' )
-    parser.add_argument( '-t', '--testRoot', type=str, required=True, help='Path where the test files are to be output' )
-    return parser.parse_args( )
+from unitygen import misc
 
 def findFiles( root, extension ):
     fileList = [ ]
@@ -216,7 +210,7 @@ def createTestCMakeList( testRootPath, sourceRootPath, sourceFiles, testData, in
             outFile.write( output )
 
 if __name__ == "__main__":
-    args = collectArguments( )
+    args = misc.parseArgs( )
 
     basePath = os.path.dirname( sys.argv[ 0 ] )
     templatesPath = os.path.join( basePath, 'templates' )
@@ -229,7 +223,6 @@ if __name__ == "__main__":
     includeFiles = findHeaderFiles( includeRootPath )
 
     testData = createTestStubs( testRootPath, sourceFiles, includeFiles )
-    # createMains( testRootPath, testData )
     createTestCMakeList( testRootPath, sourceRootPath, sourceFiles, testData, includeRootPath )
 
     copyTemplateFile( 'CMakeLists_unity.txt.in', templatesPath, testRootPath )
