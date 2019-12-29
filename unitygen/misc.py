@@ -2,6 +2,7 @@
 
 import os
 import shutil
+import hashlib
 import argparse
 
 def parseArgs( ):
@@ -31,3 +32,14 @@ def copyTemplateFile( fileName, templatesPath, destPath ):
     else:
         print( 'Copying template file {} to {}'.format( templateFilePath, destFilePath ) )
         shutil.copy2( templateFilePath, destFilePath )
+
+def checkFileContentsSame( filePath, contents ):
+    contentsMD5 = hashlib.md5( contents.encode( ) )
+
+    fileMD5 = hashlib.md5( )
+    if os.path.exists( filePath ):
+        with open( filePath, 'rb' ) as inFile:
+            for chunk in iter( lambda: inFile.read( 4096 ), b'' ):
+                fileMD5.update( chunk )
+
+    return contentsMD5.hexdigest( ) == fileMD5.hexdigest( )

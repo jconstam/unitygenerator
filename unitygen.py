@@ -2,20 +2,8 @@
 
 import os
 import sys
-import hashlib
 
 from unitygen import misc
-
-def checkFileContentsSame( filePath, contents ):
-    contentsMD5 = hashlib.md5( contents.encode( ) )
-
-    fileMD5 = hashlib.md5( )
-    if os.path.exists( filePath ):
-        with open( filePath, 'rb' ) as inFile:
-            for chunk in iter( lambda: inFile.read( 4096 ), b'' ):
-                fileMD5.update( chunk )
-
-    return contentsMD5.hexdigest( ) == fileMD5.hexdigest( )
 
 def generateTestStub( sourceFilePath, sourceFile, includeFiles ):
     testFilePath = sourceFilePath.replace( '.c', '_tests.c' )
@@ -176,7 +164,7 @@ def createTestCMakeList( testRootPath, sourceRootPath, sourceFiles, testData, in
     output += '# ==========================================\n'
     output += '\n'
     
-    if checkFileContentsSame( filePath, output ):
+    if misc.checkFileContentsSame( filePath, output ):
         print( 'CMakeLists file {} has not changed'.format( filePath ) )
     else:
         print( 'CMakeLists file {} has changed and is being generated'.format( filePath ) )

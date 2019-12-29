@@ -74,3 +74,16 @@ def test_createTemplateFiles( capsys ):
     assert os.path.exists( common.createTestPath( 'folder2/template2' ) )
     captured = capsys.readouterr( )
     assert captured.out == 'Template file {} already exists\n'.format( common.createTestPath( 'folder2/template2' ) )
+
+def test_checkFileContentsSame( ):
+    testString1 = 'This string is for testing!'
+    testString2 = 'This string is also for testing!'
+
+    with open( common.createTestPath( 'testFile1' ), 'w+' ) as writeFile:
+        writeFile.write( testString1 )
+    with open( common.createTestPath( 'testFile2' ), 'w+' ) as writeFile:
+        writeFile.write( testString2 )
+
+    assert misc.checkFileContentsSame( common.createTestPath( 'testFile1' ), testString1 )
+    assert not misc.checkFileContentsSame( common.createTestPath( 'testFile2' ), testString1 )
+    assert not misc.checkFileContentsSame( common.createTestPath( 'testFile3' ), testString1 )
