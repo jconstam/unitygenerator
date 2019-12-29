@@ -36,6 +36,14 @@ class c_module:
     def projectName( self ):
         return 'unittests_unity_c_{}'.format( self.__moduleName__ )
 
+    def hasAMock( self ):
+        return not self.__includeFile__ == ''
+    def mockFileName( self ):
+        if self.hasAMock( ):
+            return 'Mock{}'.format( os.path.basename( self.__sourceFile__ ) )
+        else:
+            return ''
+
 class filemgr:
     def __init__( self, sourcesRoot, includesRoot ):
         sourceRootPath = os.path.abspath( sourcesRoot )
@@ -171,18 +179,28 @@ class filemgr:
         output += '# ==========================================\n'
         output += '# Compile flags\n'
         output += 'set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fprofile-arcs -ftest-coverage -fno-inline -O0" )\n'
+
+        mockRoot = os.path.join( testRootPath, 'mocks' )
+        mockFiles = [ ]
+        includePaths = [ '${CMAKE_CURRENT_BINARY_DIR}/unity-src/src', '${CMAKE_CURRENT_BINARY_DIR}/cmock-src/src', mockRoot, includeRootPath ]
+        for file in self.__includeFiles__:
+            mockFiles.append( os.path.join( mockRoot, 'Mock{}'.format( file.replace( '.h', '.c' ) ) ) )
+
         for mod in self.__modules__:
             output += '# ==========================================\n'
             output += '# Setup project for {}\n'.format( mod.getModuleName( ) )
             output += 'include_directories( {}\n'.format( mod.projectName( ) )
-            output += '\t${CMAKE_CURRENT_BINARY_DIR}/unity-src/src\n'
-            output += '\t${CMAKE_CURRENT_BINARY_DIR}/cmock-src/src\n'
-            output += '\t{}\n'.format( includeRootPath )
+            for path in includePaths:
+                output += '\t{}\n'.format( path )
             output += ')\n'
             output += '# Source files\n'
             output += 'add_executable( {}\n'.format( mod.projectName( ) )
             output += '\t${CMAKE_CURRENT_BINARY_DIR}/unity-src/src/unity.c\n'
             output += '\t${CMAKE_CURRENT_BINARY_DIR}/cmock-src/src/cmock.c\n'
+            output += '\n'
+            for file in mockFiles:
+                if not os.path.basename( file ) == mod.mockFileName( ):
+                    output += '\t{}\n'.format( os.path.join( testRootPath, 'mocks', file ) )
             output += '\n'
             output += '\t{}\n'.format( os.path.join( sourceRootPath, mod.getSourceFile( ) ) )
             output += '\n'
