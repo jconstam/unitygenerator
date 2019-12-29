@@ -204,6 +204,8 @@ def createTestCMakeList( testRootPath, sourceRootPath, sourceFiles, testData, in
     output += '\tmessage( FATAL_ERROR "Build step for cmock failed: ${result}" )\n'
     output += 'endif()\n'
     output += 'execute_process( COMMAND bundle install WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/cmock-src )\n'
+    output += 'execute_process( COMMAND bash generateCMocks.sh ${{CMAKE_CURRENT_BINARY_DIR}}/cmock-src/lib/cmock.rb {}/unittest.yml {} WORKING_DIRECTORY {} )\n'.format( 
+        testRootPath, includeRootPath, testRootPath )
     output += '# ==========================================\n'
     output += '# Compile flags\n'
     output += 'set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fprofile-arcs -ftest-coverage -fno-inline -O0" )\n'
@@ -266,3 +268,5 @@ if __name__ == "__main__":
     copyTemplateFile( 'CMakeLists_unity.txt.in', templatesPath, testRootPath )
     copyTemplateFile( 'CMakeLists_cmock.txt.in', templatesPath, testRootPath )
     copyTemplateFile( 'runUnityTest.sh', templatesPath, testRootPath )
+    copyTemplateFile( 'generateCMocks.sh', templatesPath, testRootPath )
+    copyTemplateFile( 'unittest.yml', templatesPath, testRootPath )
