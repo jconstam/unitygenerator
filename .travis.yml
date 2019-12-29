@@ -17,12 +17,9 @@ addons:
 install:
   - pip install -r requirements.txt
 
-jobs:
-  include:
-    - stage: Test
-      script: pytest --cov=unitygen --cov-report=xml
-    - stage: Build Example
-      script: ./script/buildExample.sh
+script: 
+  - pytest --cov=unitygen --cov-report=xml
+  - ./script/buildExample.sh
   
 after_success:
   - coveralls
