@@ -1,7 +1,7 @@
 #!/bin/bash
 
-if [ "$#" -ne "3" ]; then
-	echo "Usage: $0 <Project Name> <Test Name> <Binary Dir>"
+if [ "$#" -ne "2" ]; then
+	echo "Usage: $0 <Project Name> <Binary Dir>"
 	exit 1
 fi
 
