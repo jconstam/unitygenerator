@@ -3,21 +3,21 @@
 echo "====================="
 echo "CLEAN UP"
 echo "====================="
-rm -rfv test/build
-rm -rfv test/unittest
+rm -rfv example/build
+rm -rfv example/unittest
 echo "====================="
 echo "CREATING DIRECTORIES"
 echo "====================="
-mkdir -pv test/build
-mkdir -pv test/unittest
+mkdir -pv example/build
+mkdir -pv example/unittest
 echo "====================="
 echo "GENERATING PROJECT"
 echo "====================="
-python3 unityGenerator.py -s test/src -i test/include -t test/unittest
+python3 unitygen.py -s example/src -i example/include -t example/unittest
 echo "====================="
 echo "RUNNING CMAKE"
 echo "====================="
-cd test/build
+cd example/build
 cmake ../unittest
 echo "====================="
 echo "BUILDING"
