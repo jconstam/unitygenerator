@@ -2,19 +2,9 @@
 
 import os
 import sys
-import shutil
 import hashlib
 
 from unitygen import misc
-
-def copyTemplateFile( fileName, templatesPath, destPath ):
-    templateFilePath = os.path.join( templatesPath, fileName )
-    destFilePath = os.path.join( destPath, fileName )
-    if os.path.exists( destFilePath ):
-        print( 'Template file {} already exists'.format( destFilePath ) )
-    else:
-        print( 'Copying template file {} to {}'.format( templateFilePath, destFilePath ) )
-        shutil.copy2( templateFilePath, destFilePath )
 
 def checkFileContentsSame( filePath, contents ):
     contentsMD5 = hashlib.md5( contents.encode( ) )
@@ -209,8 +199,8 @@ if __name__ == "__main__":
     testData = createTestStubs( testRootPath, sourceFiles, includeFiles )
     createTestCMakeList( testRootPath, sourceRootPath, sourceFiles, testData, includeRootPath )
 
-    copyTemplateFile( 'CMakeLists_unity.txt.in', templatesPath, testRootPath )
-    copyTemplateFile( 'CMakeLists_cmock.txt.in', templatesPath, testRootPath )
-    copyTemplateFile( 'runUnityTest.sh', templatesPath, testRootPath )
-    copyTemplateFile( 'generateCMocks.sh', templatesPath, testRootPath )
-    copyTemplateFile( 'unittest.yml', templatesPath, testRootPath )
+    misc.copyTemplateFile( 'CMakeLists_unity.txt.in', templatesPath, testRootPath )
+    misc.copyTemplateFile( 'CMakeLists_cmock.txt.in', templatesPath, testRootPath )
+    misc.copyTemplateFile( 'runUnityTest.sh', templatesPath, testRootPath )
+    misc.copyTemplateFile( 'generateCMocks.sh', templatesPath, testRootPath )
+    misc.copyTemplateFile( 'unittest.yml', templatesPath, testRootPath )
