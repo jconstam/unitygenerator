@@ -17,13 +17,11 @@ def setup_function( ):
 def teardown_function( ):
     common.cleanupRoot( )
 
-@mock.patch( 'argparse.ArgumentParser.parse_args', return_value=argparse.Namespace( sourceRoot='rootPath', includeRoot='includePath', testRoot='testPath' ) )
+@mock.patch( 'argparse.ArgumentParser.parse_args', return_value=argparse.Namespace( configFile='/path/to/conffile' ) )
 def test_parseArgs( mock_args ):
     args = misc.parseArgs( )
 
-    assert args.sourceRoot == 'rootPath'
-    assert args.includeRoot == 'includePath'
-    assert args.testRoot == 'testPath'
+    assert args.configFile == '/path/to/conffile'
 
 def test_findFilesSinglePath( ):
     common.touchFile( common.createTestPath( 'testFile1.x' ) )
@@ -56,24 +54,6 @@ def test_findFilesInvalidPath( ):
     assert not 'testFile1.x' in fileList
     assert not 'testFile2.x' in fileList
     assert not 'testFile3.y' in fileList
-    
-def test_createTemplateFiles( capsys ):
-    common.setupPath( common.createTestPath( 'folder1' ) )
-    common.setupPath( common.createTestPath( 'folder2' ) )
-
-    common.touchFile( common.createTestPath( 'template1' ) )
-    common.touchFile( common.createTestPath( 'template2' ) )
-    common.touchFile( common.createTestPath( 'folder2/template2' ) )
-
-    misc.copyTemplateFile( 'template1', common.rootPath, common.createTestPath( 'folder1' ) )
-    assert os.path.exists( common.createTestPath( 'folder1/template1' ) )
-    captured = capsys.readouterr( )
-    assert captured.out == 'Copying template file {} to {}\n'.format( common.createTestPath( 'template1' ), common.createTestPath( 'folder1/template1' ) )
-
-    misc.copyTemplateFile( 'template2', common.rootPath, common.createTestPath( 'folder2' ) )
-    assert os.path.exists( common.createTestPath( 'folder2/template2' ) )
-    captured = capsys.readouterr( )
-    assert captured.out == 'Template file {} already exists\n'.format( common.createTestPath( 'folder2/template2' ) )
 
 def test_checkFileContentsSame( ):
     testString1 = 'This string is for testing!'
