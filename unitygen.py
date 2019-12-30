@@ -3,18 +3,20 @@
 import os
 import sys
 
-from unitygen import misc, filemgr, templates
+from unitygen import misc, filemgr, templates, config
 
 
 if __name__ == "__main__":
     args = misc.parseArgs( )
 
-    # sourceRootPath = os.path.abspath( args.sourceRoot )
-    # includeRootPath = os.path.abspath( args.includeRoot )
-    # testRootPath = os.path.abspath( args.testRoot )
+    configData = config.configfile( os.path.abspath( args.configFile ) )
 
-    # mgr = filemgr.filemgr( sourceRootPath, includeRootPath )
-    # mgr.createTestStubs( testRootPath )
-    # mgr.createTestCMakeList( testRootPath, sourceRootPath, includeRootPath )
+    sourceRootPath = configData.getSourcesRoot( )
+    includeRootPath = configData.getIncludeRoot( )
+    testRootPath = configData.getTestRoot( )
+
+    mgr = filemgr.filemgr( sourceRootPath, includeRootPath )
+    mgr.createTestStubs( testRootPath )
+    mgr.createTestCMakeList( testRootPath, sourceRootPath, includeRootPath )
 
     templates.generateTemplates( os.path.dirname( sys.argv[ 0 ] ), testRootPath )

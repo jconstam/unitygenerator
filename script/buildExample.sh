@@ -13,7 +13,7 @@ mkdir -pv example/unittest
 echo "====================="
 echo "GENERATING PROJECT"
 echo "====================="
-python3 unitygen.py -s example/src -i example/include -t example/unittest
+python3 unitygen.py -c example/unittest_config.json
 echo "====================="
 echo "RUNNING CMAKE"
 echo "====================="
