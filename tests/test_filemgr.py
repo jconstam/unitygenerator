@@ -11,78 +11,91 @@ except ImportError:
 from unitygen import filemgr
 from tests import common
 
+__sourcePath1__ = common.createTestPath( 'src1' )
+__sourcePath2__ = common.createTestPath( 'src2' )
+__includePath1__ = common.createTestPath( 'include1' )
+__includePath2__ = common.createTestPath( 'include2' )
+
 def setup_function( ):
     common.setupRoot( )
 def teardown_function( ):
     common.cleanupRoot( )
 
-def setupTestFiles( ):
-    common.setupPath( sourcePath )
-    common.setupPath( os.path.join( sourcePath, 'folder1' ) )
-    common.setupPath( includePath )
-    common.setupPath( os.path.join( includePath, 'folder2' ) )
+def __setupTestFiles__( ):
+    common.setupPath( __sourcePath1__ )
+    common.setupPath( __sourcePath2__ )
+    common.setupPath( os.path.join( __sourcePath1__, 'folder1' ) )
+    common.setupPath( __includePath1__ )
+    common.setupPath( __includePath2__ )
+    common.setupPath( os.path.join( __includePath1__, 'folder2' ) )
 
-    common.touchFile( os.path.join( sourcePath, 'fileA.c' ) )
-    common.touchFile( os.path.join( sourcePath, 'fileB.c' ) )
-    common.touchFile( os.path.join( sourcePath, 'fileC.c' ) )
-    common.touchFile( os.path.join( sourcePath, 'fileF.c' ) )
-    common.touchFile( os.path.join( sourcePath, 'folder1', 'fileE.c' ) )
+    common.touchFile( os.path.join( __sourcePath1__, 'fileA.c' ) )
+    common.touchFile( os.path.join( __sourcePath1__, 'fileB.c' ) )
+    common.touchFile( os.path.join( __sourcePath1__, 'fileC.c' ) )
+    common.touchFile( os.path.join( __sourcePath1__, 'fileF.c' ) )
+    common.touchFile( os.path.join( __sourcePath2__, 'fileG.c' ) )
+    common.touchFile( os.path.join( __sourcePath1__, 'folder1', 'fileE.c' ) )
 
-    common.touchFile( os.path.join( includePath, 'fileA.h' ) )
-    common.touchFile( os.path.join( includePath, 'fileB.h' ) )
-    common.touchFile( os.path.join( includePath, 'fileD.h' ) )
-    common.touchFile( os.path.join( includePath, 'fileE.h' ) )
-    common.touchFile( os.path.join( includePath, 'folder2', 'fileF.h' ) )
+    common.touchFile( os.path.join( __includePath1__, 'fileA.h' ) )
+    common.touchFile( os.path.join( __includePath1__, 'fileB.h' ) )
+    common.touchFile( os.path.join( __includePath1__, 'fileD.h' ) )
+    common.touchFile( os.path.join( __includePath1__, 'fileE.h' ) )
+    common.touchFile( os.path.join( __includePath2__, 'fileG.h' ) )
+    common.touchFile( os.path.join( __includePath1__, 'folder2', 'fileF.h' ) )
 
     modules = [ ]
-    modules.append( createTestCModule( 'fileA.c', 'fileA', 'fileA.h' ) )
-    modules.append( createTestCModule( 'fileB.c', 'fileB', 'fileB.h' ) )
-    modules.append( createTestCModule( 'fileC.c', 'fileC', '' ) )
-    modules.append( createTestCModule( 'folder1/fileE.c', 'fileE', 'fileE.h' ) )
-    modules.append( createTestCModule( 'fileF.c', 'fileF', 'folder2/fileF.h' ) )
+    modules.append( __createTestCModule__( os.path.join( __sourcePath1__, 'fileA.c' ), 'fileA', os.path.join( __includePath1__, 'fileA.h' ) ) )
+    modules.append( __createTestCModule__( os.path.join( __sourcePath1__, 'fileB.c' ), 'fileB', os.path.join( __includePath1__, 'fileB.h' ) ) )
+    modules.append( __createTestCModule__( os.path.join( __sourcePath1__, 'fileC.c' ), 'fileC', '' ) )
+    modules.append( __createTestCModule__( os.path.join( __sourcePath1__, 'folder1/fileE.c' ), 'fileE', os.path.join( __includePath1__, 'fileE.h' ) ) )
+    modules.append( __createTestCModule__( os.path.join( __sourcePath1__, 'fileF.c' ), 'fileF', os.path.join( __includePath1__, 'folder2/fileF.h' ) ) )
+    modules.append( __createTestCModule__( os.path.join( __sourcePath2__, 'fileG.c' ), 'fileG', os.path.join( __includePath2__, 'fileG.h' ) ) )
     includeFiles = [ ]
-    includeFiles.append( 'fileA.h' )
-    includeFiles.append( 'fileB.h' )
-    includeFiles.append( 'fileD.h' )
-    includeFiles.append( 'fileE.h' )
-    includeFiles.append( 'folder2/fileF.h' )
+    includeFiles.append( os.path.join( __includePath1__, 'fileA.h' ) )
+    includeFiles.append( os.path.join( __includePath1__, 'fileB.h' ) )
+    includeFiles.append( os.path.join( __includePath1__, 'fileD.h' ) )
+    includeFiles.append( os.path.join( __includePath1__, 'fileE.h' ) )
+    includeFiles.append( os.path.join( __includePath2__, 'fileG.h' ) )
+    includeFiles.append( os.path.join( __includePath1__, 'folder2/fileF.h' ) )
 
     return [ modules, includeFiles ]
     
-def createTestCModule( sourceFile, moduleName, includeFile ):
+def __createTestCModule__( sourceFile, moduleName, includeFile ):
     mod = filemgr.c_module( sourceFile, [ includeFile ] )
     mod.__sourceFile__ = sourceFile
     mod.__moduleName__ = moduleName
     mod.__includeFile__ = includeFile
     return mod
 
-sourcePath = common.createTestPath( 'src' )
-includePath = common.createTestPath( 'include' )
-
 def test_constructorNoSourcePath( ):
-    common.setupPath( includePath )
+    common.setupPath( __includePath1__ )
+    common.setupPath( __includePath2__ )
     
     with pytest.raises( Exception ):
-        assert filemgr.filemgr( sourcePath, includePath )
+        assert filemgr.filemgr( [ __sourcePath1__, __sourcePath2__ ], [ __includePath1__, __includePath2__ ] )
 def test_constructorNoIncludePath( ):
-    common.setupPath( sourcePath )
+    common.setupPath( __sourcePath1__ )
+    common.setupPath( __sourcePath2__ )
     
     with pytest.raises( Exception ):
-        assert filemgr.filemgr( sourcePath, includePath )
+        assert filemgr.filemgr( [ __sourcePath1__, __sourcePath2__ ], [ __includePath1__, __includePath2__ ] )
 def test_constructorNoFiles( ):
-    common.setupPath( sourcePath )
-    common.setupPath( includePath )
+    common.setupPath( __sourcePath1__ )
+    common.setupPath( __sourcePath2__ )
+    common.setupPath( __includePath1__ )
+    common.setupPath( __includePath2__ )
 
-    mgr = filemgr.filemgr( sourcePath, includePath )
+    mgr = filemgr.filemgr( [ __sourcePath1__, __sourcePath2__ ], [ __includePath1__, __includePath2__ ] )
     assert not mgr.__modules__
     assert not mgr.__includeFiles__
 def test_constructor( ):
-    [ testModules, includeFiles ] = setupTestFiles( )
+    [ testModules, includeFiles ] = __setupTestFiles__( )
 
-    mgr = filemgr.filemgr( sourcePath, includePath )
+    mgr = filemgr.filemgr( [ __sourcePath1__, __sourcePath2__ ], [ __includePath1__, __includePath2__ ] )
     assert len( mgr.__modules__ ) == len( testModules )
     for mod in testModules:
-        assert mod in mgr.__modules__
+        assert mod in mgr.__modules__  
+        print( mod ) 
     
     assert len( mgr.__includeFiles__ ) == len( includeFiles )
     for file in includeFiles:
@@ -90,9 +103,9 @@ def test_constructor( ):
 
 def test_createTestStubs( ):
     testRootPath = common.createTestPath( 'testRoot' )
-    [ testModules, includeFiles ] = setupTestFiles( )
+    [ testModules, includeFiles ] = __setupTestFiles__( )
 
-    mgr = filemgr.filemgr( sourcePath, includePath )
+    mgr = filemgr.filemgr( [ __sourcePath1__, __sourcePath2__ ], [ __includePath1__, __includePath2__ ] )
     mgr.createTestStubs( testRootPath )
 
     for mod in testModules:
@@ -100,11 +113,11 @@ def test_createTestStubs( ):
 def test_createTestStubsPathExists( ):
     testRootPath = common.createTestPath( 'testRoot' )
     common.setupPath( testRootPath )
-    [ testModules, includeFiles ] = setupTestFiles( )
+    [ testModules, includeFiles ] = __setupTestFiles__( )
     for mod in testModules:
         os.makedirs( os.path.dirname( mod.testStubPath( testRootPath ) ) )
 
-    mgr = filemgr.filemgr( sourcePath, includePath )
+    mgr = filemgr.filemgr( [ __sourcePath1__, __sourcePath2__ ], [ __includePath1__, __includePath2__ ] )
     mgr.createTestStubs( testRootPath )
 
     for mod in testModules:
@@ -112,12 +125,12 @@ def test_createTestStubsPathExists( ):
 def test_createTestStubsFileExists( ):
     testRootPath = common.createTestPath( 'testRoot' )
     common.setupPath( testRootPath )
-    [ testModules, includeFiles ] = setupTestFiles( )
+    [ testModules, includeFiles ] = __setupTestFiles__( )
     for mod in testModules:
         os.makedirs( os.path.dirname( mod.testStubPath( testRootPath ) ) )
         common.touchFile( mod.testStubPath( testRootPath ) )
 
-    mgr = filemgr.filemgr( sourcePath, includePath )
+    mgr = filemgr.filemgr( [ __sourcePath1__, __sourcePath2__ ], [ __includePath1__, __includePath2__ ] )
     mgr.createTestStubs( testRootPath )
 
     for mod in testModules:
@@ -126,13 +139,13 @@ def test_createTestStubsFileExists( ):
 def test_createTestCMakeList( ):
     testRootPath = common.createTestPath( 'testRoot' )
     common.setupPath( testRootPath )
-    [ testModules, includeFiles ] = setupTestFiles( )
+    [ testModules, includeFiles ] = __setupTestFiles__( )
 
-    mgr = filemgr.filemgr( sourcePath, includePath )
-    mgr.createTestCMakeList( testRootPath, sourcePath, includePath )
+    mgr = filemgr.filemgr( [ __sourcePath1__, __sourcePath2__ ], [ __includePath1__, __includePath2__ ] )
+    mgr.createTestCMakeList( testRootPath )
 
     assert os.path.exists( os.path.join( testRootPath, 'CMakeLists.txt' ) )
     
-    mgr.createTestCMakeList( testRootPath, sourcePath, includePath )
+    mgr.createTestCMakeList( testRootPath )
 
     assert os.path.exists( os.path.join( testRootPath, 'CMakeLists.txt' ) )

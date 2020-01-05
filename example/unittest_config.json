@@ -1,8 +1,12 @@
 {
     "paths": {
         "root": "example",
-        "source": "src",
-        "include": "include",
+        "sources": [
+            "src"
+        ],
+        "includes": [ 
+            "include"
+        ],
         "test": "unittest"
     }
 }

@@ -11,12 +11,12 @@ if __name__ == "__main__":
 
     configData = config.configfile( os.path.abspath( args.configFile ) )
 
-    sourceRootPath = configData.getSourcesRoot( )
-    includeRootPath = configData.getIncludeRoot( )
+    sources = configData.getSourcesRoots( )
+    includes = configData.getIncludeRoots( )
     testRootPath = configData.getTestRoot( )
 
-    mgr = filemgr.filemgr( sourceRootPath, includeRootPath )
+    mgr = filemgr.filemgr( sources, includes )
     mgr.createTestStubs( testRootPath )
-    mgr.createTestCMakeList( testRootPath, sourceRootPath, includeRootPath )
+    mgr.createTestCMakeList( testRootPath )
 
     templates.generateTemplates( os.path.dirname( sys.argv[ 0 ] ), testRootPath )

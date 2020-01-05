@@ -22,6 +22,9 @@ class c_module:
         except:
             return False
 
+    def __str__( self ):
+        return '{}: {} - {}'.format( self.__moduleName__, self.__sourceFile__, self.__includeFile__ )
+
     def getSourceFile( self ):
         return self.__sourceFile__
     def getIncludeFile( self ):
@@ -45,17 +48,24 @@ class c_module:
             return ''
 
 class filemgr:
-    def __init__( self, sourcesRoot, includesRoot ):
-        sourceRootPath = os.path.abspath( sourcesRoot )
-        assert os.path.exists( sourceRootPath )
-        includeRootPath = os.path.abspath( includesRoot )
-        assert os.path.exists( includeRootPath )
+    def __init__( self, sources, includes ):
+        self.__includeRoots__ = includes
+        self.__sourceRoots__ = sources
+        self.__includeFiles__ = [ ]
+        for includePath in includes:
+            includePathAbs = os.path.abspath( includePath )
+            assert os.path.exists( includePathAbs )
+            includeFiles = misc.findFiles( includePathAbs, '.h' )
+            for includeFile in includeFiles:
+                self.__includeFiles__.append( os.path.join( includePath, includeFile ) )
 
-        sourceFiles = misc.findFiles( sourceRootPath, '.c' )
-        self.__includeFiles__ = misc.findFiles( includeRootPath, '.h' )
         self.__modules__ = [ ]
-        for file in sourceFiles:
-            self.__modules__.append( c_module( file, self.__includeFiles__ ) )
+        for sourcePath in sources:
+            sourcePathAbs = os.path.abspath( sourcePath )
+            assert os.path.exists( sourcePathAbs )
+            sourceFiles = misc.findFiles( sourcePathAbs, '.c' )
+            for file in sourceFiles:
+                self.__modules__.append( c_module( os.path.join( sourcePathAbs, file ), self.__includeFiles__ ) )
 
     def createTestStubs( self, testRootPath ):
         if not os.path.exists( testRootPath ):
@@ -140,7 +150,7 @@ class filemgr:
                 outFile.write( '// ===== END OF FILE =====\n' )
                 outFile.write( '\n' )
       
-    def createTestCMakeList( self, testRootPath, sourceRootPath, includeRootPath ):
+    def createTestCMakeList( self, testRootPath ):
         filePath = os.path.join( testRootPath, 'CMakeLists.txt' )
 
         output = ''
@@ -174,19 +184,23 @@ class filemgr:
         output += '\tmessage( FATAL_ERROR "Build step for cmock failed: ${result}" )\n'
         output += 'endif()\n'
         output += 'execute_process( COMMAND bundle install WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/cmock-src )\n'
-        output += 'execute_process( COMMAND bash generateCMocks.sh ${{CMAKE_CURRENT_BINARY_DIR}}/cmock-src/lib/cmock.rb {}/unittest.yml {} WORKING_DIRECTORY {} )\n'.format( 
-            testRootPath, includeRootPath, testRootPath )
+        for includeRoot in self.__includeRoots__:
+            output += 'execute_process( COMMAND bash generateCMocks.sh ${{CMAKE_CURRENT_BINARY_DIR}}/cmock-src/lib/cmock.rb {}/unittest.yml {} WORKING_DIRECTORY {} )\n'.format( 
+                testRootPath, includeRoot, testRootPath )
         output += '# ==========================================\n'
         output += '# Compile flags\n'
         output += 'set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fprofile-arcs -ftest-coverage -fno-inline -O0" )\n'
 
         mockRoot = os.path.join( testRootPath, 'mocks' )
         mockFiles = [ ]
-        includePaths = [ '${CMAKE_CURRENT_BINARY_DIR}/unity-src/src', '${CMAKE_CURRENT_BINARY_DIR}/cmock-src/src', mockRoot, includeRootPath ]
+        includePaths = [ '${CMAKE_CURRENT_BINARY_DIR}/unity-src/src', '${CMAKE_CURRENT_BINARY_DIR}/cmock-src/src', mockRoot ]
+        for includeRoot in self.__includeRoots__:
+            includePaths.append( includeRoot )
+        includePaths = list( dict.fromkeys( includePaths ) )
         for file in self.__includeFiles__:
             mockFiles.append( os.path.join( mockRoot, 'Mock{}'.format( os.path.basename( file ).replace( '.h', '.c' ) ) ) )
-            if not file == os.path.basename( file ):
-                includePaths.append( os.path.join( includeRootPath, os.path.dirname( file ) ) )
+            if not os.path.dirname( file ) in includePaths:
+                includePaths.append( os.path.dirname( file ) )
 
         for mod in self.__modules__:
             output += '# ==========================================\n'
@@ -203,7 +217,7 @@ class filemgr:
                 if not os.path.basename( file ) == mod.mockFileName( ):
                     output += '\t{}\n'.format( os.path.join( testRootPath, 'mocks', file ) )
             output += '\n'
-            output += '\t{}\n'.format( os.path.join( sourceRootPath, mod.getSourceFile( ) ) )
+            output += '\t{}\n'.format( mod.getSourceFile( ) )
             output += '\t{}\n'.format( mod.testStubPath( testRootPath ) )
             output += ')\n'
             output += 'add_test( {}\n'.format( mod.projectName( ) )

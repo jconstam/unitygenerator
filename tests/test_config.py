@@ -13,7 +13,7 @@ from unitygen import config
 from tests import common
 
 __testFilePath__ = common.createTestPath( 'testFile.json' )
-__testData__ = { 'paths': { 'root': 'rootPath', 'source': 'sourcePath', 'include': 'includePath', 'test': 'testPath' } }
+__testData__ = { 'paths': { 'root': 'rootPath', 'sources': [ 'sourcePath1', 'sourcePath2' ], 'includes': [ 'includePath1', 'includePath2' ], 'test': 'testPath' } }
 
 def setup_function( ):
     common.setupRoot( )
@@ -35,8 +35,8 @@ def test_constructor( testObject ):
 
 def test_getters_good( testObject ):
     assert testObject.getRootPath( ) == makePath( [ 'rootPath' ] )
-    assert testObject.getSourcesRoot( ) == makePath( [ 'rootPath', 'sourcePath' ] )
-    assert testObject.getIncludeRoot( ) == makePath( [ 'rootPath', 'includePath' ] )
+    assert testObject.getSourcesRoots( ) == [ makePath( [ 'rootPath', 'sourcePath1' ] ), makePath( [ 'rootPath', 'sourcePath2' ] ) ]
+    assert testObject.getIncludeRoots( ) == [ makePath( [ 'rootPath', 'includePath1' ] ), makePath( [ 'rootPath', 'includePath2' ] ) ]
     assert testObject.getTestRoot( ) == makePath( [ 'rootPath', 'testPath' ] )
 
 def test_getters_bad( testObject ):
@@ -48,8 +48,8 @@ def test_getters_bad( testObject ):
     testObject.__data__[ 'paths' ] = { 'root': 'rootPath' }
     
     with pytest.raises( Exception ):
-        assert testObject.getSourcesRoot( )
+        assert testObject.getSourcesRoots( )
     with pytest.raises( Exception ):
-        assert testObject.getIncludeRoot( )
+        assert testObject.getIncludeRoots( )
     with pytest.raises( Exception ):
         assert testObject.getTestRoot( )

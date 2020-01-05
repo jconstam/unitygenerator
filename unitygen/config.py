@@ -19,12 +19,18 @@ class configfile:
             print( 'Could not find key path {} in config data'.format( '/'.join( keyList ) ) )
     def __getPathWithRoot__( self, subPath ):
         return os.path.abspath( os.path.join( self.getRootPath( ), subPath ) )
+    def __getPathListWithRoot__( self, keyList ):
+        paths = self.__getDataItem__( keyList )
+        pathsAbs = [ ]
+        for path in paths:
+            pathsAbs.append( self.__getPathWithRoot__( path ) )
+        return pathsAbs
 
     def getRootPath( self ):
         return os.path.abspath( self.__getDataItem__( [ 'paths', 'root' ] ) )
-    def getSourcesRoot( self ):
-        return self.__getPathWithRoot__( self.__getDataItem__( [ 'paths', 'source' ] ) )
-    def getIncludeRoot( self ):
-        return self.__getPathWithRoot__( self.__getDataItem__( [ 'paths', 'include' ] ) )
+    def getSourcesRoots( self ):
+        return self.__getPathListWithRoot__( [ 'paths', 'sources' ] )
+    def getIncludeRoots( self ):
+        return self.__getPathListWithRoot__( [ 'paths', 'includes' ] )
     def getTestRoot( self ):
         return self.__getPathWithRoot__( self.__getDataItem__( [ 'paths', 'test' ] ) )
